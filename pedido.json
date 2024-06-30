@@ -1,0 +1,9 @@
+{
+    "Nombre": "Pedido de prueba",
+    "ID_Establecimiento": 3,
+    "productos": [
+        {"ID_Producto": 1, "Cantidad": 3},
+        {"ID_Producto": 2, "Cantidad": 2},
+        {"ID_Producto":4, "Cantidad":5}
+    ]
+}

@@ -62,12 +62,21 @@ document.getElementById('ubicacionForm').addEventListener('submit', function(eve
     event.preventDefault();
     const ubicacionId = document.getElementById('ubicacion_id').value;
 
-    axios.get(`http://localhost:8000/ubicacion/${ubicacionId}`)
-    .then(response => {
-        document.getElementById('ubicacionResult').textContent = `Ubicación: ${response.data.Ubicacion_Establecimiento}`;
-    })
-    .catch(error => {
-        console.error(error);
-        alert('Error al obtener la ubicación');
+     // Enviar solicitud GET al backend para obtener la ubicación
+     fetch(`http://localhost:8000/ubicacion/${ubicacionId}`)
+     .then(response => {
+         if (!response.ok) {
+             throw new Error('Error al obtener la ubicación');
+         }
+         return response.json();
+     })
+     .then(data => {
+         // Mostrar la ubicación en el párrafo ubicacionResult
+         document.getElementById('ubicacionResult').textContent = `Ubicación: ${data.Ubicacion_Establecimiento}`;
+     })
+     .catch(error => {
+         console.error(error);
+         alert('Error al obtener la ubicación');
     });
 });
+

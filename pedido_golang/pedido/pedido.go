@@ -1,73 +1,32 @@
 package pedido
 
 import (
-	"database/sql"
-	"net/http"
-
-	"encoding/json"
-	//"github.com/gin-gonic/gin"
+	"database/sql"	// Importa el paquete sql para manejar bases de datos relacionales
+	"net/http"		// Importa el paquete http para manejar solicitudes y respuestas HTTP
+	"encoding/json"	// Importa el paquete encoding/json para manejar codificación y decodificación JSON
 	
 )
 
+// CrearPedidoSinFW inserta un nuevo pedido en la base de datos.
+// Recibe una conexión a la base de datos `db`, el nombre del pedido `name`
+// y el ID del establecimiento `establishmentID`.
+// Devuelve el ID del nuevo pedido y un error en caso de que ocurra.
 func CrearPedidoSinFW(db *sql.DB, name string, establishmentID int) (int64, error) {
+	// Se ejecuta la instrucción SQL para insertar un nuevo pedido en la tabla pedido
 	result, err := db.Exec("INSERT INTO pedidodb.pedido (Nombre, ID_Establecimiento) VALUES (?, ?)", name, establishmentID)
 	if err != nil {
 		return 0, err
 	}
+	// Retorna el ID del último pedido insertado
 	return result.LastInsertId()
 
 }
 
-
-// func CrearPedido(c *gin.Context, db *sql.DB) {
-// 	var datos struct {
-// 		Nombre            string `json:"Nombre"`
-// 		IDEstablecimiento int    `json:"ID_Establecimiento"`
-// 		Productos         []struct {
-// 			IDProducto int `json:"ID_Producto"`
-// 			Cantidad   int `json:"Cantidad"`
-// 		} `json:"productos"`
-// 	}
-
-// 	if err := c.ShouldBindJSON(&datos); err != nil {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	tx, err := db.Begin()
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	res, err := tx.Exec("INSERT INTO Pedido (Nombre, ID_Establecimiento) VALUES (?, ?)", datos.Nombre, datos.IDEstablecimiento)
-// 	if err != nil {
-// 		tx.Rollback()
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	pedidoID, err := res.LastInsertId()
-// 	if err != nil {
-// 		tx.Rollback()
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-
-// 	for _, producto := range datos.Productos {
-// 		_, err := tx.Exec("INSERT INTO Pedido_Producto (ID_Pedido, ID_Producto, Cantidad) VALUES (?, ?, ?)", pedidoID, producto.IDProducto, producto.Cantidad)
-// 		if err != nil {
-// 			tx.Rollback()
-// 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 			return
-// 		}
-// 	}
-
-// 	tx.Commit()
-// 	c.JSON(http.StatusOK, gin.H{"mensaje": "Pedido creado exitosamente", "ID_Pedido": pedidoID})
-// }
-
+// RankingEstablecimientosSinFW genera un ranking de establecimientos basado en el total vendido.
+// Recibe una conexión a la base de datos `db`, un ResponseWriter `w` y una solicitud `r`.
+// Devuelve un JSON con los resultados del ranking.
 func RankingEstablecimientosSinFW(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	// Ejecuta la consulta SQL para obtener el ranking de establecimientos
 	rows, err := db.Query(`
         SELECT e.RazonSocial, SUM(pp.Cantidad * p.Precio) AS Total_Vendido
         FROM Pedido_Producto pp
@@ -78,19 +37,24 @@ func RankingEstablecimientosSinFW(db *sql.DB, w http.ResponseWriter, r *http.Req
         ORDER BY Total_Vendido DESC
     `)
 	if err != nil {
+		// Si ocurre un error durante la consulta, devuelve un error HTTP 
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
 
 	var resultados []map[string]interface{}
+	// Itera sobre los resultados de la consulta
 	for rows.Next() {
 		var razonSocial string
 		var totalVendido float64
+		// Escanea los resultados de la fila actual en las variables correspondientes
 		if err := rows.Scan(&razonSocial, &totalVendido); err != nil {
+			// Si ocurre un error durante el escaneo, devuelve un error HTTP
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		// Añade el resultado actual al slice de resultados
 		resultados = append(resultados, map[string]interface{}{
 			"RazonSocial":   razonSocial,
 			"Total_Vendido": totalVendido,
@@ -98,67 +62,33 @@ func RankingEstablecimientosSinFW(db *sql.DB, w http.ResponseWriter, r *http.Req
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	// Codifica los resultados en JSON y los envía en la respuesta
 	if err := json.NewEncoder(w).Encode(resultados); err != nil {
+		// Si ocurre un error durante la codificación JSON, devuelve un error HTTP 500
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
-// func RankingEstablecimientos(c *gin.Context, db *sql.DB) {
-// 	rows, err := db.Query(`
-//         SELECT e.RazonSocial, SUM(pp.Cantidad * p.Precio) AS Total_Vendido
-//         FROM Pedido_Producto pp
-//         JOIN Pedido p ON pp.ID_Pedido = p.ID_Pedido
-//         JOIN Producto pr ON pp.ID_Producto = pr.ID_Producto
-//         JOIN Establecimiento e ON p.ID_Establecimiento = e.ID_Establecimiento
-//         GROUP BY e.ID_Establecimiento
-//         ORDER BY Total_Vendido DESC
-//     `)
-// 	if err != nil {
-// 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-// 		return
-// 	}
-// 	defer rows.Close()
 
-// 	var resultados []map[string]interface{}
-// 	for rows.Next() {
-// 		var razonSocial string
-// 		var totalVendido float64
-// 		rows.Scan(&razonSocial, &totalVendido)
-// 		resultados = append(resultados, map[string]interface{}{
-// 			"RazonSocial":   razonSocial,
-// 			"Total_Vendido": totalVendido,
-// 		})
-// 	}
-
-// 	c.JSON(http.StatusOK, resultados)
-// }
-
+// UbicacionEstablecimientoSinFW obtiene la ubicación de un establecimiento por su ID.
+// Recibe una conexión a la base de datos `db`, un ResponseWriter `w` y una solicitud `r`.
+// Devuelve un JSON con la ubicación del establecimiento
 func UbicacionEstablecimientoSinFW(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	// Obtiene el ID del establecimiento de los parámetros de la URL
 	id := r.URL.Query().Get("id")
+	// Ejecuta la consulta SQL para obtener la ubicación del establecimiento
 	row := db.QueryRow("SELECT Ubicacion_Establecimiento FROM Establecimiento WHERE ID_Establecimiento = ?", id)
 
 	var ubicacion string
+	// Escanea el resultado de la consulta en la variable ubicación
 	if err := row.Scan(&ubicacion); err != nil {
 		http.Error(w, "Establecimiento no encontrado", http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	// Codifica la ubicación en JSON y la envía en la respuesta
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"Ubicacion_Establecimiento": ubicacion,
 	})
 }
-
-
-// func UbicacionEstablecimiento(c *gin.Context, db *sql.DB) {
-// 	id := c.Param("id")
-// 	row := db.QueryRow("SELECT Ubicacion_Establecimiento FROM Establecimiento WHERE ID_Establecimiento = ?", id)
-
-// 	var ubicacion string
-// 	if err := row.Scan(&ubicacion); err != nil {
-// 		c.JSON(http.StatusNotFound, gin.H{"error": "Establecimiento no encontrado"})
-// 		return
-// 	}
-
-// 	c.JSON(http.StatusOK, gin.H{"Ubicacion_Establecimiento": ubicacion})
-// }
