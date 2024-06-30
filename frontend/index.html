@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedido App</title>
+    <link rel="stylesheet" href="styles.css">
+
+<!-- <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> -->
+    <script src="scripts.js"></script>
+</head>
+<body>
+    <h1>Pedido App</h1>
+
+    <section>
+        <h2>Crear Pedido</h2>
+        <form id="pedidoForm">
+            <label for="nombre">Nombre del Pedido:</label>
+            <input type="text" id="nombre" name="nombre" required>
+
+            <label for="establecimiento">ID del Establecimiento:</label>
+            <input type="number" id="establecimiento" name="establecimiento" required>
+
+            <h3>Productos</h3>
+            <div id="productos">
+                <div class="producto">
+                    <label for="producto_id">ID del Producto:</label>
+                    <input type="number" class="producto_id" name="producto_id" required>
+                    <label for="cantidad">Cantidad:</label>
+                    <input type="number" class="cantidad" name="cantidad" required>
+                </div>
+            </div>
+            <button type="button" id="addProduct">Agregar Producto</button>
+            <button type="submit">Crear Pedido</button>
+            
+        </form>
+    </section>
+
+    <section>
+        <h2>Ranking de Establecimientos</h2>
+        <button id="fetchRanking">Obtener Ranking</button>
+        <ul id="rankingList"></ul>
+    </section>
+
+    <section>
+        <h2>Consultar Ubicación de Establecimiento</h2>
+        <form id="ubicacionForm">
+            <label for="ubicacion_id">ID del Establecimiento:</label>
+            <input type="number" id="ubicacion_id" name="ubicacion_id" required>
+            <button type="submit">Consultar</button>
+        </form>
+        <p id="ubicacionResult"></p>
+    </section>
+
+</body>
+</html>
