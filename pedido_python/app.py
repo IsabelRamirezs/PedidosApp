@@ -48,6 +48,13 @@ def ranking_establecimientos():
     ''')
     resultados = cursor.fetchall() # Se obtienen los resultados de da consulta
     cursor.close()
+
+    # Mostrar ranking en la línea de comandos
+    print("Ranking de Establecimientos:")
+    for i, establecimiento in enumerate(resultados, start=1):
+        print(f"{i}. {establecimiento['RazonSocial']}: {establecimiento['Total_Vendido']}")
+
+
     return jsonify(resultados)
 
 # Handler para obtener ubicación

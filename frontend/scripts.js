@@ -79,4 +79,3 @@ document.getElementById('ubicacionForm').addEventListener('submit', function(eve
          alert('Error al obtener la ubicación');
     });
 });
-
